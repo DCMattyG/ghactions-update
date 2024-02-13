@@ -16,6 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "Job triggered by a ${{ github.event_name }} event to main."
+      - run: echo "---HEAD COMMIT MESSAGE--"
+      - run: echo "${{ github.event.head_commit.message }}"
+      - run: echo "------------------------"
 
       - name: Checkout Express App Code
         uses: actions/checkout@v3
