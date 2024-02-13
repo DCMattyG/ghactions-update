@@ -55,8 +55,7 @@ jobs:
           tag_name: v${{ steps.updateVersion.outputs.ipamVersion }}
           release_name: Release v${{ steps.updateVersion.outputs.ipamVersion }}
           body: |
-            Changes in this Release:
-            - Updated Express App Version
+            Express App Release
           draft: false
           prerelease: false
 
