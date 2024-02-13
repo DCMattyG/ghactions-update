@@ -26,7 +26,7 @@ jobs:
         run: |
           $packageJson = Get-Content -Path .\package.json | ConvertFrom-Json
           $packageJsonVer = [System.Version]$packageJson.version
-          $newVersion = "{0}.{1}.{2}" -f ($packageJsonVer.Major + 1), $packageJsonVer.Minor, $packageJsonVer.Build
+          $newVersion = "{0}.{1}.{2}" -f $packageJsonVer.Major, ($packageJsonVer.Minor + 1), $packageJsonVer.Build
           $packageJson.version = $newVersion
           $packageJson | ConvertTo-Json | Set-Content -Path .\package.json
 
