@@ -24,7 +24,10 @@ jobs:
         id: updateVersion
         shell: pwsh
         run: |
-          $newVersion = "latest"
+          $packageJson = Get-Content -Path .\package.json | ConvertFrom-Json
+          $packageJsonVer = [System.Version]$packageJson.version
+          $packageJson.version = "{0}.{1}.{2}" -f ($packageJsonVer.Major + 1), $packageJsonVer.Minor, $packageJsonVer.Build
+          $packageJson | ConvertTo-Json | Set-Content -Path .\package.json
 
           Write-Output "ipamVersion=$newVersion" >> $Env:GITHUB_OUTPUT
 
