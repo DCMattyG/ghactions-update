@@ -1,0 +1,17 @@
+name: Express Testing
+
+run-name: Express Deployment & Testing
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    name: Deploy Express App
+    runs-on: ubuntu-latest
+    steps:
+      - name: Say Hello
+        shell: pwsh
+        run: |
+          Write-Host "Hello!"
