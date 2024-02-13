@@ -26,7 +26,8 @@ jobs:
         run: |
           $packageJson = Get-Content -Path .\package.json | ConvertFrom-Json
           $packageJsonVer = [System.Version]$packageJson.version
-          $packageJson.version = "{0}.{1}.{2}" -f ($packageJsonVer.Major + 1), $packageJsonVer.Minor, $packageJsonVer.Build
+          $newVersion = "{0}.{1}.{2}" -f ($packageJsonVer.Major + 1), $packageJsonVer.Minor, $packageJsonVer.Build
+          $packageJson.version = $newVersion
           $packageJson | ConvertTo-Json | Set-Content -Path .\package.json
 
           Write-Output "ipamVersion=$newVersion" >> $Env:GITHUB_OUTPUT
@@ -37,3 +38,17 @@ jobs:
           git config --global user.email "expressactions@users.noreply.github.com"
           git commit -a -m "Updated Express App Version"
           git push
+
+      - name: "Publish Express App Release"
+        id: publishRelease
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.updateVersion.outputs.ipamVersion }}
+          release_name: Release v${{ steps.updateVersion.outputs.ipamVersion }}
+          body: |
+            Changes in this Release:
+            - Updated Express App Version
+          draft: false
+          prerelease: false
