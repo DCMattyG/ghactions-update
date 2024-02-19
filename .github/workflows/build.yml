@@ -21,7 +21,7 @@ jobs:
       - run: echo "------------------------"
 
       - name: Checkout Express App Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: "Increment Express App Version"
         id: updateVersion
@@ -51,18 +51,29 @@ jobs:
           git commit -a -m "Updated Express App Version"
           git push
 
-      - name: "Publish Express App Release"
-        id: publishRelease
-        uses: actions/create-release@v1
+      # - name: "Publish Express App Release"
+      #   id: publishRelease
+      #   uses: actions/create-release@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     tag_name: v${{ steps.updateVersion.outputs.ipamVersion }}
+      #     release_name: Release v${{ steps.updateVersion.outputs.ipamVersion }}
+      #     body: |
+      #       Express App Release
+      #     draft: false
+      #     prerelease: false
+
+      - name: Publish Express App Release Asset
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
           tag_name: v${{ steps.updateVersion.outputs.ipamVersion }}
           release_name: Release v${{ steps.updateVersion.outputs.ipamVersion }}
-          body: |
-            Express App Release
-          draft: false
-          prerelease: false
+        run: |
+          gh release create "$tag_name" \
+            --repo="$GITHUB_REPOSITORY" \
+            --title="$release_name" \
+            --generate-notes
 
       - name: Upload Express App Release Asset
         id: uploadReleaseAsset
