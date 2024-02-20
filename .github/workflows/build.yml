@@ -74,7 +74,7 @@ jobs:
           gh release create "$tag_name" \
             --repo="$GITHUB_REPOSITORY" \
             --title="$release_name" \
-            --generate-notes
+            --notes "Express App Release"
 
       # - name: Upload Express App Release Asset
       #   id: uploadReleaseAsset
