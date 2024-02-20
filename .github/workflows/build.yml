@@ -40,7 +40,7 @@ jobs:
         run: |
           $targetVersion = "${{ steps.findVersion.outputs.targetVersion }}"
 
-          if ($targetVersion -eq $None) {
+          if ($targetVersion -eq "") {
             Write-Host "No version passed in"
           } else {
             Write-Host "Version passed in: $targetVersion"
