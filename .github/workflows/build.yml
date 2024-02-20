@@ -32,7 +32,6 @@ jobs:
             Write-Output "targetVersion=$version" >> $Env:GITHUB_OUTPUT
           } else {
             Write-Host "No version found in commit message"
-            Write-Output "targetVersion=$None" >> $Env:GITHUB_OUTPUT
           }
 
       - name: "Test Version from Commit Message"
