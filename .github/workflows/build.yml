@@ -20,6 +20,20 @@ jobs:
       - run: echo "${{ github.event.head_commit.message }}"
       - run: echo "------------------------"
 
+      - name: "Find Versiob from Commit Message"
+        id: findVersion
+        shell: pwsh
+        run: |
+          $commitMsg = "${{ github.event.head_commit.message }}"
+          $version = [regex]::matches($commitMsg, '(?<=\[version:).*(?=])').value
+
+          if ($version) {
+            Write-Host "Version found in commit message: $version"
+            Write-Output "targetVersion=$version" >> $Env:GITHUB_OUTPUT
+          } else {
+            Write-Host "No version found in commit message"
+          }
+
       - name: Checkout Express App Code
         uses: actions/checkout@v4
 
