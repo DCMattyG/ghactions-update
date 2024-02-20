@@ -20,7 +20,7 @@ jobs:
       - run: echo "${{ github.event.head_commit.message }}"
       - run: echo "------------------------"
 
-      - name: "Find Versiob from Commit Message"
+      - name: "Find Version from Commit Message"
         id: findVersion
         shell: pwsh
         run: |
@@ -32,6 +32,19 @@ jobs:
             Write-Output "targetVersion=$version" >> $Env:GITHUB_OUTPUT
           } else {
             Write-Host "No version found in commit message"
+            Write-Output "targetVersion=$None" >> $Env:GITHUB_OUTPUT
+          }
+
+      - name: "Test Version from Commit Message"
+        id: testVersion
+        shell: pwsh
+        run: |
+          $targetVersion = "${{ steps.findVersion.outputs.targetVersion }}"
+
+          if ($targetVersion -eq $None) {
+            Write-Host "No version passed in"
+          } else {
+            Write-Host "Version passed in: $targetVersion"
           }
 
       - name: Checkout Express App Code
