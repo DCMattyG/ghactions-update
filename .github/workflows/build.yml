@@ -85,7 +85,7 @@ jobs:
 
           Write-Host "Target version: $targetVersion"
 
-          $packageJson.version = $newVersion
+          $packageJson.version = $targetVersion
           $packageJson | ConvertTo-Json | Set-Content -Path .\package.json
 
           Write-Output "ipamVersion=$targetVersion" >> $Env:GITHUB_OUTPUT
