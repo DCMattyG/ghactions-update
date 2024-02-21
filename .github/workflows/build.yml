@@ -24,7 +24,7 @@ jobs:
         id: prCommits
         shell: pwsh
         run: |
-          $body = ${{github.pull_request.body}}
+          $body = ${{github.event.pull_request.body}}
 
           Write-Host "Body: $body"
 
