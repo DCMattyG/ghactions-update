@@ -24,7 +24,7 @@ jobs:
         id: outputCommits
         shell: pwsh
         run: |
-          $commitMsgs = ${{join(github.event.commits.*.message, ', ')}}
+          $commitMsgs = "${{join(github.event.commits.*.message, ', ')}}""
 
           Write-Host "Commit Messages: $commitMsgs"
 
