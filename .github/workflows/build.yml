@@ -79,6 +79,8 @@ jobs:
             $targetVersion = "{0}.{1}.{2}" -f $packageJsonVer.Major, $packageJsonVer.Minor, ($packageJsonVer.Build + 1)
           }
 
+          Write-Host "Target version: $targetVersion"
+
           $packageJson.version = $newVersion
           $packageJson | ConvertTo-Json | Set-Content -Path .\package.json
 
