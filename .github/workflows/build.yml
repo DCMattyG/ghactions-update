@@ -26,7 +26,7 @@ jobs:
         run: |
           $commitMsgs = "${{join(github.event.commits.*.message, ', ')}}""
 
-          Write-Host "Commit Messages: $commitMsgs"
+          Write-Host "Messages: $commitMsgs"
 
       - name: "Find Version from Commit Message"
         id: findVersion
