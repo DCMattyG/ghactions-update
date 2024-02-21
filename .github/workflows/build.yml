@@ -24,11 +24,9 @@ jobs:
         id: outputCommits
         shell: pwsh
         run: |
-          $commitMsgs = ${{ github.event.commits }}
+          $commitMsgs = ${{join(github.event.commits.*.message, ', ')}}
 
-          foreach ($commit in $commitMsgs) {
-            Write-Host "Commit Message: $($commit.message)"
-          }
+          Write-Host "Commit Messages: $commitMsgs"
 
       - name: "Find Version from Commit Message"
         id: findVersion
