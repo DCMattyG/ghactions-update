@@ -37,6 +37,7 @@ jobs:
         run: |
           echo '${{ fromJson(steps.get_pr_data.outputs.result).number }}'
           echo '${{ fromJson(steps.get_pr_data.outputs.result).title }}'
+          echo '${{ fromJson(steps.get_pr_data.outputs.result).body }}'
 
       - name: "Find Version from Commit Message"
         id: findVersion
