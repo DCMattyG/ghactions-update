@@ -39,8 +39,11 @@ jobs:
           echo '${{ fromJson(steps.getPullRequestData.outputs.result).title }}'
           echo '${{ fromJson(steps.getPullRequestData.outputs.result).body }}'
 
-      - name: "Find Version from Commit Message"
-        id: findVersion
+      - name: Checkout Express App Code
+        uses: actions/checkout@v4
+
+      - name: "Increment Express App Version"
+        id: updateVersion
         env:
           prBody: ${{ fromJson(steps.getPullRequestData.outputs.result).body }}
         shell: pwsh
@@ -50,46 +53,36 @@ jobs:
           $minor = $env:prBody -match '(?<=\[)minor(?=])'
           $build = $env:prBody -match '(?<=\[)build(?=])'
 
+          $packageJson = Get-Content -Path .\package.json | ConvertFrom-Json
+          $packageJsonVer = [System.Version]$packageJson.version
+
+          Write-Host "Current package.json version: $packageJsonVer"
           Write-Host "Version found in commit message: $version"
           Write-Host "Bump Major: $major"
           Write-Host "Bump Minor: $minor"
           Write-Host "Bump Build: $build"
 
-          Write-Output "targetVersion=$version" >> $Env:GITHUB_OUTPUT
-          Write-Output "bumpMajor=$major" >> $Env:GITHUB_OUTPUT
-          Write-Output "bumpMinor=$minor" >> $Env:GITHUB_OUTPUT
-          Write-Output "bumpBuild=$build" >> $Env:GITHUB_OUTPUT
+          try {
+            $version = [System.Version]$version
+            $newVersion = "{0}.{1}.{2}" -f $version.Major, $version.Minor, $version.Build
+          } catch {
+            $newVersion = $null
+          }
 
-      - name: "Test Version from Commit Message"
-        id: testVersion
-        shell: pwsh
-        run: |
-          $targetVersion = "${{ steps.findVersion.outputs.targetVersion }}"
-          $bumpMajor = [System.Convert]::ToBoolean("${{ steps.findVersion.outputs.bumpMajor }}")
-          $bumpMinor = [System.Convert]::ToBoolean("${{ steps.findVersion.outputs.bumpMinor }}")
-          $bumpBuild = [System.Convert]::ToBoolean("${{ steps.findVersion.outputs.bumpBuild }}")
+          if ($newVersion) {
+            $targetVersion = $newVersion
+          } else if ($major) {
+            $targetVersion = "{0}.{1}.{2}" -f ($packageJsonVer.Major + 1), $packageJsonVer.Minor, $packageJsonVer.Build
+          } else if ($minor) {
+            $targetVersion = "{0}.{1}.{2}" -f $packageJsonVer.Major, ($packageJsonVer.Minor + 1), $packageJsonVer.Build
+          } else {
+            $targetVersion = "{0}.{1}.{2}" -f $packageJsonVer.Major, $packageJsonVer.Minor, ($packageJsonVer.Build + 1)
+          }
 
-          Write-Host "Version passed in: $targetVersion"
-          Write-Host "Bump Major passed: $bumpMajor"
-          Write-Host "Bump Minor passed: $bumpMinor"
-          Write-Host "Bump Build passed: $bumpBuild"
-
-      - name: Checkout Express App Code
-        uses: actions/checkout@v4
-
-      - name: "Increment Express App Version"
-        id: updateVersion
-        shell: pwsh
-        run: |
-          $packageJson = Get-Content -Path .\package.json | ConvertFrom-Json
-          $packageJsonVer = [System.Version]$packageJson.version
-          # $newVersion = "{0}.{1}.{2}" -f ($packageJsonVer.Major + 1), $packageJsonVer.Minor, $packageJsonVer.Build
-          # $newVersion = "{0}.{1}.{2}" -f $packageJsonVer.Major, ($packageJsonVer.Minor + 1), $packageJsonVer.Build
-          $newVersion = "{0}.{1}.{2}" -f $packageJsonVer.Major, $packageJsonVer.Minor, ($packageJsonVer.Build + 1)
           $packageJson.version = $newVersion
           $packageJson | ConvertTo-Json | Set-Content -Path .\package.json
 
-          Write-Output "ipamVersion=$newVersion" >> $Env:GITHUB_OUTPUT
+          Write-Output "ipamVersion=$targetVersion" >> $Env:GITHUB_OUTPUT
 
       - name: "Create Express App ZIP Asset"
         id: createZipAsset
