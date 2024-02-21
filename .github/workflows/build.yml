@@ -20,13 +20,13 @@ jobs:
       - run: echo "${{ github.event.head_commit.message }}"
       - run: echo "------------------------"
 
-      - name: "Output Commit Messages"
-        id: outputCommits
+      - name: "Output PR Body"
+        id: prCommits
         shell: pwsh
         run: |
-          $commitMsgs = "${{join(github.event.commits.*.message, ', ')}}"
+          $body = ${{github.pull_request.body}}
 
-          Write-Host "Messages: $commitMsgs"
+          Write-Host "Body: $body"
 
       - name: "Find Version from Commit Message"
         id: findVersion
