@@ -70,12 +70,16 @@ jobs:
           }
 
           if ($newVersion) {
+            Write-Host "Version specificed"
             $targetVersion = $newVersion
           } elseif ($major) {
+            Write-Host "Major detected"
             $targetVersion = "{0}.{1}.{2}" -f ($packageJsonVer.Major + 1), $packageJsonVer.Minor, $packageJsonVer.Build
           } elseif ($minor) {
+            Write-Host "Minor detected"
             $targetVersion = "{0}.{1}.{2}" -f $packageJsonVer.Major, ($packageJsonVer.Minor + 1), $packageJsonVer.Build
           } else {
+            Write-Host "Build detected"
             $targetVersion = "{0}.{1}.{2}" -f $packageJsonVer.Major, $packageJsonVer.Minor, ($packageJsonVer.Build + 1)
           }
 
