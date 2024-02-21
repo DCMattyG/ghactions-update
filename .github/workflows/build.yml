@@ -66,7 +66,7 @@ jobs:
             $version = [System.Version]$version
             $newVersion = "{0}.{1}.{2}" -f $version.Major, $version.Minor, $version.Build
           } catch {
-            $newVersion = $null
+            $version = $null
           }
 
           if ($version -ne $null) {
