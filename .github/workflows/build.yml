@@ -69,7 +69,7 @@ jobs:
             $newVersion = $null
           }
 
-          if ($newVersion -ne $null) {
+          if ($version -ne $null) {
             Write-Host "Version specificed"
             $targetVersion = $newVersion
           } elseif ($major) {
