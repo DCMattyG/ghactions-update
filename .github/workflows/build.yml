@@ -45,10 +45,10 @@ jobs:
           prBody: ${{ fromJson(steps.getPullRequestData.outputs.result).body }}
         shell: pwsh
         run: |
-          $version = [regex]::matches($prBody, '(?<=\[version:).*(?=])').value
-          $major = $prBody -match '(?<=\[)major(?=])'
-          $minor = $prBody -match '(?<=\[)minor(?=])'
-          $build = $prBody -match '(?<=\[)build(?=])'
+          $version = [regex]::matches($env:prBody, '(?<=\[version:).*(?=])').value
+          $major = $env:prBody -match '(?<=\[)major(?=])'
+          $minor = $env:prBody -match '(?<=\[)minor(?=])'
+          $build = $env:prBody -match '(?<=\[)build(?=])'
 
           Write-Host "Version found in commit message: $version"
           Write-Host "Bump Major: $major"
