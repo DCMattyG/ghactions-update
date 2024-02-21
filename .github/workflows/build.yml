@@ -19,6 +19,9 @@ jobs:
       - run: echo "---HEAD COMMIT MESSAGE--"
       - run: echo "${{ github.event.head_commit.message }}"
       - run: echo "------------------------"
+      - run: echo "---COMMIT MESSAGES--"
+      - run: echo "${{ github.event.commits }}"
+      - run: echo "------------------------"
 
       - name: "Find Version from Commit Message"
         id: findVersion
