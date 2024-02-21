@@ -22,7 +22,7 @@ jobs:
       - run: echo "------------------------"
 
       - uses: actions/github-script@v7
-        id: get_pr_data
+        id: getPullRequestData
         with:
           script: |
             return (
@@ -32,22 +32,23 @@ jobs:
                 repo: context.repo.repo,
               })
             ).data[0];
-  
+
       - name: Pull Request data
         run: |
-          echo '${{ fromJson(steps.get_pr_data.outputs.result).number }}'
-          echo '${{ fromJson(steps.get_pr_data.outputs.result).title }}'
-          echo '${{ fromJson(steps.get_pr_data.outputs.result).body }}'
+          echo '${{ fromJson(steps.getPullRequestData.outputs.result).number }}'
+          echo '${{ fromJson(steps.getPullRequestData.outputs.result).title }}'
+          echo '${{ fromJson(steps.getPullRequestData.outputs.result).body }}'
 
       - name: "Find Version from Commit Message"
         id: findVersion
+        env:
+          prBody: ${{ fromJson(steps.getPullRequestData.outputs.result).body }}
         shell: pwsh
         run: |
-          $commitMsg = "${{ github.event.head_commit.message }}"
-          $version = [regex]::matches($commitMsg, '(?<=\[version:).*(?=])').value
-          $major = $commitMsg -match '(?<=\[)major(?=])'
-          $minor = $commitMsg -match '(?<=\[)minor(?=])'
-          $build = $commitMsg -match '(?<=\[)build(?=])'
+          $version = [regex]::matches($prBody, '(?<=\[version:).*(?=])').value
+          $major = $prBody -match '(?<=\[)major(?=])'
+          $minor = $prBody -match '(?<=\[)minor(?=])'
+          $build = $prBody -match '(?<=\[)build(?=])'
 
           Write-Host "Version found in commit message: $version"
           Write-Host "Bump Major: $major"
@@ -121,12 +122,11 @@ jobs:
         id: publishRelease
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          tag_name: v${{ steps.updateVersion.outputs.ipamVersion }}
-          release_name: Release v${{ steps.updateVersion.outputs.ipamVersion }}
+          tagName: v${{ steps.updateVersion.outputs.ipamVersion }}
         run: |
-          gh release create "$tag_name" \
+          gh release create "$tagName" \
             --repo="$GITHUB_REPOSITORY" \
-            --title="$release_name" \
+            --title="$tagName" \
             --notes "Express App Release"
 
       # - name: Upload Express App Release Asset
@@ -144,7 +144,7 @@ jobs:
         id: uploadReleaseAsset
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          tag_name: v${{ steps.updateVersion.outputs.ipamVersion }}
-          asset_path: ./assets/express.zip
+          tagName: v${{ steps.updateVersion.outputs.ipamVersion }}
+          assetPath: ./assets/express.zip
         run: |
-          gh release upload "$tag_name" "$asset_path"
+          gh release upload "$tagName" "$assetPath"
