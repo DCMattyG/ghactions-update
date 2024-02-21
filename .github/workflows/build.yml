@@ -19,9 +19,16 @@ jobs:
       - run: echo "---HEAD COMMIT MESSAGE--"
       - run: echo "${{ github.event.head_commit.message }}"
       - run: echo "------------------------"
-      - run: echo "---COMMIT MESSAGES--"
-      - run: echo "${{ github.event.commits }}"
-      - run: echo "------------------------"
+
+      - name: "Output Commit Messages"
+        id: outputCommits
+        shell: pwsh
+        run: |
+          $commitMsgs = ${{ github.event.commits }}
+
+          foreach ($commit in $commitMsgs) {
+            Write-Host "Commit Message: $($commit.message)"
+          }
 
       - name: "Find Version from Commit Message"
         id: findVersion
