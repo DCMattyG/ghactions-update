@@ -7,13 +7,13 @@ on:
     branches: [ main ]
 
 permissions:
-  # id-token: write #
+  # id-token: write
   contents: write
   pull-requests: read
 
 jobs:
-  update:
-    name: Update Express App Containers
+  version:
+    name: Update Express App Version
     runs-on: ubuntu-latest
     steps:
       - run: echo "Job triggered by a ${{ github.event_name }} event to main."
@@ -69,15 +69,15 @@ jobs:
             $version = $null
           }
 
-          if ($version -ne $null) {
+          if ($version) {
             Write-Host "Version specificed"
             $targetVersion = $newVersion
           } elseif ($major) {
             Write-Host "Major detected"
-            $targetVersion = "{0}.{1}.{2}" -f ($packageJsonVer.Major + 1), $packageJsonVer.Minor, $packageJsonVer.Build
+            $targetVersion = "{0}.0.0" -f ($packageJsonVer.Major + 1)
           } elseif ($minor) {
             Write-Host "Minor detected"
-            $targetVersion = "{0}.{1}.{2}" -f $packageJsonVer.Major, ($packageJsonVer.Minor + 1), $packageJsonVer.Build
+            $targetVersion = "{0}.{1}.0" -f $packageJsonVer.Major, ($packageJsonVer.Minor + 1)
           } else {
             Write-Host "Build detected"
             $targetVersion = "{0}.{1}.{2}" -f $packageJsonVer.Major, $packageJsonVer.Minor, ($packageJsonVer.Build + 1)
@@ -89,6 +89,13 @@ jobs:
           $packageJson | ConvertTo-Json | Set-Content -Path .\package.json
 
           Write-Output "ipamVersion=$targetVersion" >> $Env:GITHUB_OUTPUT
+
+  update:
+    name: Update Express App Containers
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Express App Code
+        uses: actions/checkout@v4
 
       - name: "Create Express App ZIP Asset"
         id: createZipAsset
@@ -104,46 +111,22 @@ jobs:
           git commit -a -m "Updated Express App Version"
           git push
 
-      # - name: "Publish Express App Release"
-      #   id: publishRelease
-      #   uses: actions/create-release@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     tag_name: v${{ steps.updateVersion.outputs.ipamVersion }}
-      #     release_name: Release v${{ steps.updateVersion.outputs.ipamVersion }}
-      #     body: |
-      #       Express App Release
-      #     draft: false
-      #     prerelease: false
-
       - name: Publish Express App Release Asset
         id: publishRelease
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          tagName: v${{ steps.updateVersion.outputs.ipamVersion }}
+          tagName: v${{ needs.version.outputs.ipamVersion }}
         run: |
           gh release create "$tagName" \
             --repo="$GITHUB_REPOSITORY" \
             --title="$tagName" \
             --notes "Express App Release"
 
-      # - name: Upload Express App Release Asset
-      #   id: uploadReleaseAsset
-      #   uses: actions/upload-release-asset@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     upload_url: ${{ steps.publishRelease.outputs.upload_url }}
-      #     asset_path: ./assets/express.zip
-      #     asset_name: express.zip
-      #     asset_content_type: application/zip
-
       - name: Publish Express App Release Asset
         id: uploadReleaseAsset
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          tagName: v${{ steps.updateVersion.outputs.ipamVersion }}
+          tagName: v${{ needs.version.outputs.ipamVersion }}
           assetPath: ./assets/express.zip
         run: |
           gh release upload "$tagName" "$assetPath"
