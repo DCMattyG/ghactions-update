@@ -95,6 +95,7 @@ jobs:
   update:
     name: Update Express App Containers
     runs-on: ubuntu-latest
+    needs: version
     steps:
       - name: Checkout Express App Code
         uses: actions/checkout@v4
