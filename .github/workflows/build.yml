@@ -122,7 +122,7 @@ jobs:
         id: createZipAsset
         shell: pwsh
         run: |
-          Compress-Archive -Path .\app.js -DestinationPath .\assets\express.zip -Force
+          Compress-Archive -Path .\package.json -DestinationPath .\assets\express.zip -Force
 
       - name: Checkin Updated Express Code
         id: checkinCode
