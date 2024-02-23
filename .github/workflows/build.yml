@@ -54,7 +54,7 @@ jobs:
         id: createBranch
         run: |
           git checkout -b express-version
-          git push origin version-branch
+          git push origin express-version
 
       - name: "Update Express App Version"
         id: updateVersion
@@ -108,7 +108,7 @@ jobs:
         id: checkinCode
         run: |
           git commit -a -m "Updated Express App Version"
-          git push origin version-branch
+          git push origin express-version
 
   release:
     name: Create Express App Release
@@ -139,7 +139,7 @@ jobs:
         id: checkinCode
         run: |
           git commit -a -m "Added Express App Release Asset"
-          git push origin version-branch
+          git push origin express-version
 
       - name: Create and Merge Pull Reuest
         id: pullRequest
@@ -147,9 +147,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Creating Pull Request..."
-          gh pr create --base main --head version-branch --title "Update Express App Version" --body "-Updated Version to v${{ needs.version.outputs.ipamVersion }}"
+          gh pr create --base main --head express-version --title "Update Express App Version" --body "-Updated Version to v${{ needs.version.outputs.ipamVersion }}"
           echo "Merging Pull Request..."
-          gh pr merge version-branch -t "Merge pull request from DCMattyG/version-branch [skip ci]" -m
+          gh pr merge express-version -t "Merge pull request from DCMattyG/express-version [skip ci]" -m
 
       - name: Switch to Main Branch
         id: mainBranch
@@ -160,7 +160,7 @@ jobs:
       - name: Delete Temporary Branch
         id: deleteBranch
         run: |
-          git push origin --delete version-branch
+          git push origin --delete express-version
 
       - name: Publish Express App Release Asset
         id: publishRelease
