@@ -42,7 +42,7 @@ jobs:
           echo '${{ fromJson(steps.getPullRequestData.outputs.result).title }}'
           echo '${{ fromJson(steps.getPullRequestData.outputs.result).body }}'
           echo '${{ fromJson(steps.getPullRequestData.outputs.result).number }}'
-          echo 'prNumber=${{ fromJson(steps.getPullRequestData.outputs.result).number }}' >> $GITHUB_OUTPUT
+          echo "prNumber=${{ fromJson(steps.getPullRequestData.outputs.result).number }}" >> $GITHUB_OUTPUT
 
       - name: Checkout Express App Code
         uses: actions/checkout@v4
@@ -56,7 +56,7 @@ jobs:
       - name: Create Temporary Branch
         id: createBranch
         env:
-          prNumber: ${{ steps.getPullRequestData.outputs.result.number }}
+          prNumber: ${{ steps.prData.outputs.prNumber }}
         run: |
           git checkout -b "express-version-$prNumber"
           git push origin "express-version-$prNumber"
@@ -118,7 +118,7 @@ jobs:
       - name: Checkin Updated Express App Code
         id: checkinCode
         env:
-          prNumber: ${{ steps.getPullRequestData.outputs.result.number }}
+          prNumber: ${{ steps.prData.outputs.prNumber }}
         run: |
           git commit -a -m "Updated Express App Version and Created Release Asset"
           git push origin "express-version-$prNumber"
