@@ -111,8 +111,17 @@ jobs:
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "expressactions@users.noreply.github.com"
+
+          git checkout -b version-branch
           git commit -a -m "Updated Express App Version"
-          git push
+          git push origin version-branch
+
+          gh pr create --base main --head version-branch --title "Update Express App Version" --body "-Updated Version to v${{ needs.version.outputs.ipamVersion }}"
+          gh pr merge version-branch -t "Merge pull request from DCMattyG/version-branch [skip ci]" -m
+
+          git checkout main
+          git pull
+          git push origin --delete version-branch
 
       - name: Publish Express App Release Asset
         id: publishRelease
