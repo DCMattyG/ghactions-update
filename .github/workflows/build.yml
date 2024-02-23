@@ -58,8 +58,8 @@ jobs:
         env:
           prNumber: ${{ steps.getPullRequestData.outputs.result.number }}
         run: |
-          git checkout -b express-version-$prNumber
-          git push origin express-version-$prNumber
+          git checkout -b "express-version-$prNumber"
+          git push origin "express-version-$prNumber"
 
       - name: "Update Express App Version"
         id: updateVersion
@@ -121,7 +121,7 @@ jobs:
           prNumber: ${{ steps.getPullRequestData.outputs.result.number }}
         run: |
           git commit -a -m "Updated Express App Version and Created Release Asset"
-          git push origin express-version-$prNumber
+          git push origin "express-version-$prNumber"
 
   release:
     name: Create Express App Release
@@ -138,9 +138,9 @@ jobs:
           prNumber: ${{ needs.version.outputs.prNumber }}
         run: |
           echo "Creating Pull Request..."
-          gh pr create --base main --head express-version-$prNumber --title "Update Express App Version" --body "-Updated Version to v${{ needs.version.outputs.ipamVersion }}"
+          gh pr create --base main --head "express-version-$prNumber" --title "Update Express App Version" --body "-Updated Version to v${{ needs.version.outputs.ipamVersion }}"
           echo "Merging Pull Request..."
-          gh pr merge express-version-$prNumber -t "Merge pull request from DCMattyG/express-version-$prNumber [skip ci]" -m
+          gh pr merge "express-version-$prNumber" -t "Merge pull request from DCMattyG/express-version-$prNumber [skip ci]" -m
 
       - name: Pull Merged Code from Main Branch
         id: pullMainCode
@@ -152,7 +152,7 @@ jobs:
         env:
           prNumber: ${{ needs.version.outputs.prNumber }}
         run: |
-          git push origin --delete express-version-$prNumber
+          git push origin --delete "express-version-$prNumber"
 
       - name: Create Express App Release
         id: publishRelease
