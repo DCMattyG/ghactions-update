@@ -127,6 +127,7 @@ jobs:
       - name: Switch to Temporary Branch
         id: switchBranch
         run: |
+          git fetch
           git checkout express-version
 
       - name: "Create Express App ZIP Asset"
