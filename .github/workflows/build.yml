@@ -100,6 +100,17 @@ jobs:
       - name: Checkout Express App Code
         uses: actions/checkout@v4
 
+      - name: Configure Git
+        id: configureGit
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "expressactions@users.noreply.github.com"
+
+      - name: Create Temporary Branch
+        id: createBranch
+        run: |
+          git checkout -b version-branch
+
       - name: "Create Express App ZIP Asset"
         id: createZipAsset
         shell: pwsh
@@ -111,18 +122,21 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "expressactions@users.noreply.github.com"
-
-          git checkout -b version-branch
+          echo "Committing updated code..."
           git commit -a -m "Updated Express App Version"
+          echo "Pushing code to temporary branch..."
           git push origin version-branch
 
+          echo "Creating Pull Request..."
           gh pr create --base main --head version-branch --title "Update Express App Version" --body "-Updated Version to v${{ needs.version.outputs.ipamVersion }}"
+          echo "Merging Pull Request..."
           gh pr merge version-branch -t "Merge pull request from DCMattyG/version-branch [skip ci]" -m
 
+          echo "Checking out main..."
           git checkout main
           git pull
+
+          echo "Deleting temporary branch..."
           git push origin --delete version-branch
 
       - name: Publish Express App Release Asset
