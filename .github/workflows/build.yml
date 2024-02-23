@@ -115,7 +115,7 @@ jobs:
         shell: pwsh
         run: |
           $packageJson = Get-Content -Path .\package.json | ConvertFrom-Json
-          $packageJson.version = $targetVersion
+          $packageJson.version = $env:targetVersion
           $packageJson | ConvertTo-Json | Set-Content -Path .\package.json
 
       - name: "Create Express App ZIP Asset"
