@@ -44,6 +44,12 @@ jobs:
       - name: Checkout Express App Code
         uses: actions/checkout@v4
 
+      - name: Configure Git
+        id: configureGit
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "expressactions@users.noreply.github.com"
+
       - name: Create Temporary Branch
         id: createBranch
         run: |
