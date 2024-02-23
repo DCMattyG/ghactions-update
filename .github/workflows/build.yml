@@ -111,7 +111,7 @@ jobs:
       - name: "Increment Express App Version"
         id: updateVersion
         env:
-          version: ${{ needs.version.outputs.ipamVersion }}
+          targetVersion: ${{ needs.version.outputs.ipamVersion }}
         shell: pwsh
         run: |
           $packageJson = Get-Content -Path .\package.json | ConvertFrom-Json
