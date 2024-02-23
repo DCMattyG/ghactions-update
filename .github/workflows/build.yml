@@ -16,7 +16,7 @@ jobs:
     name: Update Express App Version
     runs-on: ubuntu-latest
     outputs:
-      ipamVersion: ${{ steps.updateVersion.outputs.ipamVersion }}
+      ipamVersion: ${{ steps.findNewVersion.outputs.ipamVersion }}
     steps:
       - run: echo "Job triggered by a ${{ github.event_name }} event to main."
       - run: echo "---HEAD COMMIT MESSAGE--"
@@ -44,8 +44,8 @@ jobs:
       - name: Checkout Express App Code
         uses: actions/checkout@v4
 
-      - name: "Increment Express App Version"
-        id: updateVersion
+      - name: "Calculate New Express App Version"
+        id: findNewVersion
         env:
           prBody: ${{ fromJson(steps.getPullRequestData.outputs.result).body }}
         shell: pwsh
@@ -87,9 +87,6 @@ jobs:
 
           Write-Host "Target version: $targetVersion"
 
-          $packageJson.version = $targetVersion
-          $packageJson | ConvertTo-Json | Set-Content -Path .\package.json
-
           Write-Output "ipamVersion=$targetVersion" >> $Env:GITHUB_OUTPUT
 
   release:
@@ -110,6 +107,16 @@ jobs:
         id: createBranch
         run: |
           git checkout -b version-branch
+
+      - name: "Increment Express App Version"
+        id: updateVersion
+        env:
+          version: ${{ needs.version.outputs.ipamVersion }}
+        shell: pwsh
+        run: |
+          $packageJson = Get-Content -Path .\package.json | ConvertFrom-Json
+          $packageJson.version = $targetVersion
+          $packageJson | ConvertTo-Json | Set-Content -Path .\package.json
 
       - name: "Create Express App ZIP Asset"
         id: createZipAsset
