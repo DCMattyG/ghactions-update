@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       ipamVersion: ${{ steps.updateVersion.outputs.ipamVersion }}
+      prNumber: ${{ steps.prData.outputs.prNumber }}
     steps:
       - run: echo "Job triggered by a ${{ github.event_name }} event to main."
       - run: echo "---HEAD COMMIT MESSAGE--"
@@ -35,11 +36,13 @@ jobs:
               })
             ).data[0];
 
-      - name: Pull Request data
+      - name: Pull Request Data
+        id: prData
         run: |
-          echo '${{ fromJson(steps.getPullRequestData.outputs.result).number }}'
           echo '${{ fromJson(steps.getPullRequestData.outputs.result).title }}'
           echo '${{ fromJson(steps.getPullRequestData.outputs.result).body }}'
+          echo '${{ fromJson(steps.getPullRequestData.outputs.result).number }}'
+          echo 'prNumber=${{ fromJson(steps.getPullRequestData.outputs.result).number }}' >> $GITHUB_OUTPUT
 
       - name: Checkout Express App Code
         uses: actions/checkout@v4
@@ -52,9 +55,11 @@ jobs:
 
       - name: Create Temporary Branch
         id: createBranch
+        env:
+          prNumber: ${{ steps.getPullRequestData.outputs.result.number }}
         run: |
-          git checkout -b express-version
-          git push origin express-version
+          git checkout -b express-version-$prNumber
+          git push origin express-version-$prNumber
 
       - name: "Update Express App Version"
         id: updateVersion
@@ -104,11 +109,19 @@ jobs:
 
           Write-Output "ipamVersion=$targetVersion" >> $Env:GITHUB_OUTPUT
 
+      - name: "Create Express App ZIP Asset"
+        id: createZipAsset
+        shell: pwsh
+        run: |
+          Compress-Archive -Path .\package.json -DestinationPath .\assets\express.zip -Force
+
       - name: Checkin Updated Express App Code
         id: checkinCode
+        env:
+          prNumber: ${{ steps.getPullRequestData.outputs.result.number }}
         run: |
-          git commit -a -m "Updated Express App Version"
-          git push origin express-version
+          git commit -a -m "Updated Express App Version and Created Release Asset"
+          git push origin express-version-$prNumber
 
   release:
     name: Create Express App Release
@@ -118,50 +131,28 @@ jobs:
       - name: Checkout Express App Code
         uses: actions/checkout@v4
 
-      - name: Configure Git
-        id: configureGit
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "expressactions@users.noreply.github.com"
-
-      - name: Switch to Temporary Branch
-        id: switchBranch
-        run: |
-          git fetch
-          git checkout express-version
-
-      - name: "Create Express App ZIP Asset"
-        id: createZipAsset
-        shell: pwsh
-        run: |
-          Compress-Archive -Path .\package.json -DestinationPath .\assets\express.zip -Force
-
-      - name: Checkin Updated Express Code
-        id: checkinCode
-        run: |
-          git commit -a -m "Added Express App Release Asset"
-          git push origin express-version
-
       - name: Create and Merge Pull Reuest
         id: pullRequest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          prNumber: ${{ needs.version.outputs.prNumber }}
         run: |
           echo "Creating Pull Request..."
-          gh pr create --base main --head express-version --title "Update Express App Version" --body "-Updated Version to v${{ needs.version.outputs.ipamVersion }}"
+          gh pr create --base main --head express-version-$prNumber --title "Update Express App Version" --body "-Updated Version to v${{ needs.version.outputs.ipamVersion }}"
           echo "Merging Pull Request..."
-          gh pr merge express-version -t "Merge pull request from DCMattyG/express-version [skip ci]" -m
+          gh pr merge express-version-$prNumber -t "Merge pull request from DCMattyG/express-version-$prNumber [skip ci]" -m
 
-      - name: Switch to Main Branch
-        id: mainBranch
+      - name: Pull Merged Code from Main Branch
+        id: pullMainCode
         run: |
-          git checkout main
           git pull
 
       - name: Delete Temporary Branch
         id: deleteBranch
+        env:
+          prNumber: ${{ needs.version.outputs.prNumber }}
         run: |
-          git push origin --delete express-version
+          git push origin --delete express-version-$prNumber
 
       - name: Create Express App Release
         id: publishRelease
