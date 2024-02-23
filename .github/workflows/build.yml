@@ -163,7 +163,7 @@ jobs:
         run: |
           git push origin --delete express-version
 
-      - name: Publish Express App Release Asset
+      - name: Create Express App Release
         id: publishRelease
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
