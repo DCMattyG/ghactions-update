@@ -16,7 +16,7 @@ jobs:
     name: Update Express App Version
     runs-on: ubuntu-latest
     outputs:
-      ipamVersion: ${{ steps.findNewVersion.outputs.ipamVersion }}
+      ipamVersion: ${{ steps.updateVersion.outputs.ipamVersion }}
     steps:
       - run: echo "Job triggered by a ${{ github.event_name }} event to main."
       - run: echo "---HEAD COMMIT MESSAGE--"
@@ -44,8 +44,13 @@ jobs:
       - name: Checkout Express App Code
         uses: actions/checkout@v4
 
+      - name: Create Temporary Branch
+        id: createBranch
+        run: |
+          git checkout -b express-version
+
       - name: "Calculate New Express App Version"
-        id: findNewVersion
+        id: updateVersion
         env:
           prBody: ${{ fromJson(steps.getPullRequestData.outputs.result).body }}
         shell: pwsh
@@ -87,7 +92,16 @@ jobs:
 
           Write-Host "Target version: $targetVersion"
 
+          $packageJson.version = $targetVersion
+          $packageJson | ConvertTo-Json | Set-Content -Path .\package.json
+
           Write-Output "ipamVersion=$targetVersion" >> $Env:GITHUB_OUTPUT
+
+      - name: Checkin Updated Express Code
+        id: checkinCode
+        run: |
+          git commit -a -m "Updated Express App Version"
+          git push origin version-branch
 
   release:
     name: Create Express App Release
@@ -103,20 +117,10 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "expressactions@users.noreply.github.com"
 
-      - name: Create Temporary Branch
-        id: createBranch
+      - name: Switch to Temporary Branch
+        id: switchBranch
         run: |
-          git checkout -b version-branch
-
-      - name: "Increment Express App Version"
-        id: updateVersion
-        env:
-          targetVersion: ${{ needs.version.outputs.ipamVersion }}
-        shell: pwsh
-        run: |
-          $packageJson = Get-Content -Path .\package.json | ConvertFrom-Json
-          $packageJson.version = $env:targetVersion
-          $packageJson | ConvertTo-Json | Set-Content -Path .\package.json
+          git checkout express-version
 
       - name: "Create Express App ZIP Asset"
         id: createZipAsset
@@ -126,24 +130,29 @@ jobs:
 
       - name: Checkin Updated Express Code
         id: checkinCode
+        run: |
+          git commit -a -m "Added Express App Release Asset"
+          git push origin version-branch
+
+      - name: Create and Merge Pull Reuest
+        id: pullRequest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "Committing updated code..."
-          git commit -a -m "Updated Express App Version"
-          echo "Pushing code to temporary branch..."
-          git push origin version-branch
-
           echo "Creating Pull Request..."
           gh pr create --base main --head version-branch --title "Update Express App Version" --body "-Updated Version to v${{ needs.version.outputs.ipamVersion }}"
           echo "Merging Pull Request..."
           gh pr merge version-branch -t "Merge pull request from DCMattyG/version-branch [skip ci]" -m
 
-          echo "Checking out main..."
+      - name: Switch to Main Branch
+        id: mainBranch
+        run: |
           git checkout main
           git pull
 
-          echo "Deleting temporary branch..."
+      - name: Delete Temporary Branch
+        id: deleteBranch
+        run: |
           git push origin --delete version-branch
 
       - name: Publish Express App Release Asset
