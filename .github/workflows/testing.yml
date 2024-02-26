@@ -1,6 +1,6 @@
-name: Express Testing
+name: Express App Testing
 
-run-name: Run Express Tests
+run-name: Express App Production Testing
 
 on:
   pull_request:
