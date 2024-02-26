@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       ipamVersion: ${{ steps.updateVersion.outputs.ipamVersion }}
-      prNumber: ${{ steps.prData.outputs.prNumber }}
+      prNumber: ${{ fromJson(steps.getPullRequestData.outputs.result).number }}
     steps:
       - run: echo "Job triggered by a ${{ github.event_name }} event to main."
       - run: echo "---HEAD COMMIT MESSAGE--"
@@ -35,14 +35,6 @@ jobs:
               })
             ).data[0];
 
-      - name: Pull Request Data
-        id: prData
-        run: |
-          echo '${{ fromJson(steps.getPullRequestData.outputs.result).title }}'
-          echo '${{ fromJson(steps.getPullRequestData.outputs.result).body }}'
-          echo '${{ fromJson(steps.getPullRequestData.outputs.result).number }}'
-          echo "prNumber=${{ fromJson(steps.getPullRequestData.outputs.result).number }}" >> $GITHUB_OUTPUT
-
       - name: Checkout Express App Code
         uses: actions/checkout@v4
 
@@ -55,7 +47,7 @@ jobs:
       - name: Create Temporary Branch
         id: createBranch
         env:
-          prNumber: ${{ steps.prData.outputs.prNumber }}
+          prNumber: ${{ fromJson(steps.getPullRequestData.outputs.result).number }}
         run: |
           git checkout -b "express-version-$prNumber"
           git push origin "express-version-$prNumber"
@@ -117,7 +109,7 @@ jobs:
       - name: Checkin Updated Express App Code
         id: checkinCode
         env:
-          prNumber: ${{ steps.prData.outputs.prNumber }}
+          prNumber: ${{ fromJson(steps.getPullRequestData.outputs.result).number }}
         run: |
           git commit -a -m "Updated Express App Version and Created Release Asset"
           git push origin "express-version-$prNumber"
@@ -136,10 +128,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           prNumber: ${{ needs.version.outputs.prNumber }}
         run: |
-          echo "Creating Pull Request..."
           gh pr create --base main --head "express-version-$prNumber" --title "Update Express App Version" --body "-Updated Version to v${{ needs.version.outputs.ipamVersion }}"
-          echo "Merging Pull Request..."
-          gh pr merge "express-version-$prNumber" -t "Merge pull request from DCMattyG/express-version-$prNumber [skip ci]" -m
+          gh pr merge "express-version-$prNumber" -t "Merge pull request #$prNumber from DCMattyG/express-version-$prNumber [skip ci]" -m
 
       - name: Pull Merged Code from Main Branch
         id: pullMainCode
