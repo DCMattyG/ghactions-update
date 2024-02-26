@@ -1,6 +1,6 @@
-name: Express App Versioning
+name: Express App Build & Release
 
-run-name: Express App Version Update
+run-name: Express App Production Build & Release
 
 on:
   push:
@@ -122,28 +122,53 @@ jobs:
           git commit -a -m "Updated Express App Version and Created Release Asset"
           git push origin "express-version-$prNumber"
 
-      - name: Create and Merge Pull Request
+  release:
+    name: Create Express App Release
+    runs-on: ubuntu-latest
+    needs: version
+    steps:
+      - name: Checkout Express App Code
+        uses: actions/checkout@v4
+
+      - name: Create and Merge Pull Reuest
         id: pullRequest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          prNumber: ${{ steps.prData.outputs.prNumber }}
+          prNumber: ${{ needs.version.outputs.prNumber }}
         run: |
-          git checkout main
-          gh pr create --base main --head "express-version-$prNumber" --title "Update Express App Version" --body "-Updated Version to v$prNumber"
+          echo "Creating Pull Request..."
+          gh pr create --base main --head "express-version-$prNumber" --title "Update Express App Version" --body "-Updated Version to v${{ needs.version.outputs.ipamVersion }}"
+          echo "Merging Pull Request..."
           gh pr merge "express-version-$prNumber" -t "Merge pull request from DCMattyG/express-version-$prNumber [skip ci]" -m
+
+      - name: Pull Merged Code from Main Branch
+        id: pullMainCode
+        run: |
           git pull
 
       - name: Delete Temporary Branch
         id: deleteBranch
         env:
-          prNumber: ${{ steps.prData.outputs.prNumber }}
+          prNumber: ${{ needs.version.outputs.prNumber }}
         run: |
           git push origin --delete "express-version-$prNumber"
 
-      - name: Tag Main Branch
-        id: tagBranch
+      - name: Create Express App Release
+        id: publishRelease
         env:
-          tagName: v${{ steps.updateVersion.outputs.ipamVersion }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          tagName: v${{ needs.version.outputs.ipamVersion }}
         run: |
-          git tag $tagName
-          git push origin --tags
+          gh release create "$tagName" \
+            --repo="$GITHUB_REPOSITORY" \
+            --title="$tagName" \
+            --notes "Express App Release"
+
+      - name: Publish Express App Release Asset
+        id: uploadReleaseAsset
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          tagName: v${{ needs.version.outputs.ipamVersion }}
+          assetPath: ./assets/express.zip
+        run: |
+          gh release upload "$tagName" "$assetPath"
