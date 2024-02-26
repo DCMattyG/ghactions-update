@@ -111,7 +111,7 @@ jobs:
         env:
           prNumber: ${{ fromJson(steps.getPullRequestData.outputs.result).number }}
         run: |
-          git commit -a -m "Updated Express App Version and Created Release Asset"
+          git commit -a -m "Updated Express App Version"
           git push origin "express-version-${prNumber}"
 
   release:
