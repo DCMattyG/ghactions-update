@@ -37,8 +37,6 @@ jobs:
 
       - name: Checkout Express App Code
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.PAT_TOKEN }}
 
       - name: Configure Git
         id: configureGit
@@ -127,7 +125,7 @@ jobs:
       - name: Create and Merge Pull Reuest
         id: pullRequest
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
           prNumber: ${{ needs.version.outputs.prNumber }}
         run: |
           gh pr create --base main --head "express-version-${prNumber}" --title "Update Express App Version" --body "-Updated Version to v${{ needs.version.outputs.ipamVersion }}"
