@@ -37,6 +37,8 @@ jobs:
 
       - name: Checkout Express App Code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
 
       - name: Configure Git
         id: configureGit
