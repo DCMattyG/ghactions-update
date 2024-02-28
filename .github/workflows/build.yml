@@ -37,6 +37,8 @@ jobs:
 
       - name: Checkout Express App Code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
 
       - name: Configure Git
         id: configureGit
@@ -44,13 +46,13 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "expressactions@users.noreply.github.com"
 
-      - name: Create Temporary Branch
-        id: createBranch
-        env:
-          prNumber: ${{ fromJson(steps.getPullRequestData.outputs.result).number }}
-        run: |
-          git checkout -b "express-version-${prNumber}"
-          git push origin "express-version-${prNumber}"
+      # - name: Create Temporary Branch
+      #   id: createBranch
+      #   env:
+      #     prNumber: ${{ fromJson(steps.getPullRequestData.outputs.result).number }}
+      #   run: |
+      #     git checkout -b "express-version-${prNumber}"
+      #     git push origin "express-version-${prNumber}"
 
       - name: "Update Express App Version"
         id: updateVersion
@@ -112,7 +114,8 @@ jobs:
           prNumber: ${{ fromJson(steps.getPullRequestData.outputs.result).number }}
         run: |
           git commit -a -m "Updated Express App Version"
-          git push origin "express-version-${prNumber}"
+          # git push origin "express-version-${prNumber}"
+          git push
 
   release:
     name: Create Express App Release
@@ -122,23 +125,23 @@ jobs:
       - name: Checkout Express App Code
         uses: actions/checkout@v4
 
-      - name: Create and Merge Pull Reuest
-        id: pullRequest
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
-          prNumber: ${{ needs.version.outputs.prNumber }}
-        run: |
-          echo "Creating pull request..."
-          gh pr create --base main --head "express-version-${prNumber}" --title "Update Express App Version" --body "-Updated Version to v${{ needs.version.outputs.ipamVersion }}"
-          # echo "Waiting for pull request requirements..."
-          # gh pr checks "express-version-${prNumber}" --watch
-          echo "Merging pull request..."
-          gh pr merge "express-version-${prNumber}" -t "Merge pull request from DCMattyG/express-version-${prNumber} [skip ci]" -m -d
+      # - name: Create and Merge Pull Reuest
+      #   id: pullRequest
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+      #     prNumber: ${{ needs.version.outputs.prNumber }}
+      #   run: |
+      #     echo "Creating pull request..."
+      #     gh pr create --base main --head "express-version-${prNumber}" --title "Update Express App Version" --body "-Updated Version to v${{ needs.version.outputs.ipamVersion }}"
+      #     # echo "Waiting for pull request requirements..."
+      #     # gh pr checks "express-version-${prNumber}" --watch
+      #     echo "Merging pull request..."
+      #     gh pr merge "express-version-${prNumber}" -t "Merge pull request from DCMattyG/express-version-${prNumber} [skip ci]" -m -d
 
-      - name: Pull Merged Code from Main Branch
-        id: pullMainCode
-        run: |
-          git pull
+      # - name: Pull Merged Code from Main Branch
+      #   id: pullMainCode
+      #   run: |
+      #     git pull
 
       - name: Create Express App Release
         id: publishRelease
