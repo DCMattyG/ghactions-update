@@ -4,7 +4,9 @@ run-name: Express App Production Testing
 
 on:
   pull_request:
-    branches: [ main ]
+    branches:
+      - 'main'
+      - '!express-version-*'
 
 jobs:
   deploy:
