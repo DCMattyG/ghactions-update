@@ -130,22 +130,13 @@ jobs:
         run: |
           echo "Creating pull request..."
           gh pr create --base main --head "express-version-${prNumber}" --title "Update Express App Version" --body "-Updated Version to v${{ needs.version.outputs.ipamVersion }}"
-          echo "Waiting for checks to complete..."
-          gh pr checks "express-version-${prNumber}" --watch
           echo "Merging pull request..."
-          gh pr merge "express-version-${prNumber}" -t "Merge pull request from DCMattyG/express-version-${prNumber} [skip ci]" -m
+          gh pr merge "express-version-${prNumber}" -t "Merge pull request from DCMattyG/express-version-${prNumber} [skip ci]" -m -d
 
       - name: Pull Merged Code from Main Branch
         id: pullMainCode
         run: |
           git pull
-
-      - name: Delete Temporary Branch
-        id: deleteBranch
-        env:
-          prNumber: ${{ needs.version.outputs.prNumber }}
-        run: |
-          git push origin --delete "express-version-${prNumber}"
 
       - name: Create Express App Release
         id: publishRelease
