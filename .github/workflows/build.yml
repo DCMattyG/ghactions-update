@@ -43,8 +43,8 @@ jobs:
       - name: Configure Git
         id: configureGit
         run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "expressactions@users.noreply.github.com"
+          git config --global user.name "Express GitHub Actions"
+          git config --global user.email "express-actions@users.noreply.github.com"
 
       # - name: Create Temporary Branch
       #   id: createBranch
@@ -113,7 +113,7 @@ jobs:
         env:
           prNumber: ${{ fromJson(steps.getPullRequestData.outputs.result).number }}
         run: |
-          git commit -a -m "Updated Express App Version"
+          git commit -a -m "Updated Express App Version to v${{ steps.updateVersion.outputs.ipamVersion }} [skip ci]"
           # git push origin "express-version-${prNumber}"
           git push
 
