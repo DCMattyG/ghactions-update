@@ -17,6 +17,7 @@ jobs:
     outputs:
       ipamVersion: ${{ steps.updateVersion.outputs.ipamVersion }}
       prNumber: ${{ fromJson(steps.getPullRequestData.outputs.result).number }}
+      commitHash: ${{ steps.checkinCode.outputs.commitHash }}
     steps:
       - run: echo "Job triggered by a ${{ github.event_name }} event to main."
       - run: echo "---HEAD COMMIT MESSAGE--"
@@ -116,6 +117,7 @@ jobs:
           git commit -a -m "Updated Express App Version to v${{ steps.updateVersion.outputs.ipamVersion }} [skip ci]"
           # git push origin "express-version-${prNumber}"
           git push
+          echo "commitHash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
   release:
     name: Create Express App Release
@@ -124,6 +126,8 @@ jobs:
     steps:
       - name: Checkout Express App Code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version.outputs.commitHash }}
 
       # - name: Create and Merge Pull Reuest
       #   id: pullRequest
