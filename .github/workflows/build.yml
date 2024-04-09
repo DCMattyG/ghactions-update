@@ -166,3 +166,19 @@ jobs:
           assetPath: ./assets/express.zip
         run: |
           gh release upload "$tagName" "$assetPath"
+
+  build:
+    name: Build Express App Containers
+    runs-on: ubuntu-latest
+    needs: [ version, release ]
+    steps:
+      - run: echo "Building new containers..."
+      - run: echo "Commit hash is ${{ needs.version.outputs.commitHash }}"
+
+  build-legacy:
+    name: Build Legacy Express App Containers
+    runs-on: ubuntu-latest
+    needs: [ version, release ]
+    steps:
+      - run: echo "Building legacy containers..."
+      - run: echo "Commit hash is ${{ needs.version.outputs.commitHash }}"
