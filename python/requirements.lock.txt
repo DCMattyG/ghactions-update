@@ -1,1 +1,8 @@
-# Empty Right Now
+# Dependencies for Actions v12.7.5
+certifi==2024.7.4
+charset-normalizer==3.3.2
+idna==3.7
+numpy==2.0.0
+requests==2.32.3
+urllib3==2.2.2
+uuid==1.30
