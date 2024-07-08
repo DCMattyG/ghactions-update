@@ -121,9 +121,6 @@ jobs:
         run: |
           echo "# Dependencies for Actions v${{ steps.updateVersion.outputs.ipamVersion }}" > requirements.lock.txt
           pip freeze >> requirements.lock.txt
-          pwd
-          ls -lh
-          cat requirements.lock.txt
 
       - name: "Create Express App ZIP Asset"
         id: createZipAsset
