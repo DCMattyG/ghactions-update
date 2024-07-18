@@ -122,11 +122,11 @@ jobs:
           echo "# Dependencies for Actions v${{ steps.updateVersion.outputs.ipamVersion }}" > requirements.lock.txt
           pip freeze >> requirements.lock.txt
 
-      - name: "Create Express App ZIP Asset"
-        id: createZipAsset
-        shell: pwsh
-        run: |
-          Compress-Archive -Path .\package.json -DestinationPath .\assets\express.zip -Force
+      # - name: "Create Express App ZIP Asset"
+      #   id: createZipAsset
+      #   shell: pwsh
+      #   run: |
+      #     Compress-Archive -Path .\package.json -DestinationPath .\assets\express.zip -Force
 
       - name: Checkin Updated Express App Code
         id: checkinCode
@@ -177,14 +177,14 @@ jobs:
             --title="$tagName" \
             --notes "Express App Release"
 
-      - name: Publish Express App Release Asset
-        id: uploadReleaseAsset
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          tagName: v${{ needs.version.outputs.ipamVersion }}
-          assetPath: ./assets/express.zip
-        run: |
-          gh release upload "$tagName" "$assetPath"
+      # - name: Publish Express App Release Asset
+      #   id: uploadReleaseAsset
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     tagName: v${{ needs.version.outputs.ipamVersion }}
+      #     assetPath: ./assets/express.zip
+      #   run: |
+      #     gh release upload "$tagName" "$assetPath"
 
   build:
     name: Build Express App Containers
