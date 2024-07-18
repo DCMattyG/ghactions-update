@@ -4,7 +4,7 @@ run-name: Express App Production Assets Build & Upload
 
 on:
   release:
-    types: [ published ]
+    types: [ created ]
 
 permissions:
   contents: write
