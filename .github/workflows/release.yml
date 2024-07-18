@@ -3,10 +3,8 @@ name: Express App Release Assets
 run-name: Express App Production Assets Build & Upload
 
 on:
-  workflow_run:
-    workflows: [ Express App Build & Release ]
-    types:
-      - completed
+  release:
+    types: [ published ]
 
 permissions:
   contents: write
