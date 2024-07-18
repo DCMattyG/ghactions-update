@@ -54,7 +54,7 @@ jobs:
           id: uploadReleaseAsset
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            tagName: v${{ github.event.release.tag_name }}
+            tagName: ${{ github.event.release.tag_name }}
             assetPath: ./assets/express.zip
           run: |
             gh release upload "$tagName" "$assetPath"
