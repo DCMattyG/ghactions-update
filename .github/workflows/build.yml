@@ -1,203 +1,45 @@
-name: Express App Build & Release
+name: Express App Build
 
-run-name: Express App Production Build & Release
+run-name: Express App Container Build
 
 on:
-  push:
-    branches: [ main ]
+  release:
+    types: [ published ]
 
 permissions:
-  contents: write
-  pull-requests: write
+  id-token: write
 
 jobs:
-  version:
-    name: Update Express App Version
+  init:
+    name: Initialize Express App Build
     runs-on: ubuntu-latest
     outputs:
-      ipamVersion: ${{ steps.updateVersion.outputs.ipamVersion }}
-      prNumber: ${{ fromJson(steps.getPullRequestData.outputs.result).number }}
-      commitHash: ${{ steps.checkinCode.outputs.commitHash }}
+      ipamVersion: ${{ steps.extractVersion.outputs.ipamVersion }}
     steps:
-      - run: echo "Job triggered by a ${{ github.event_name }} event to main."
-      - run: echo "---HEAD COMMIT MESSAGE--"
-      - run: echo "${{ github.event.head_commit.message }}"
-      - run: echo "------------------------"
+      - run: echo "Job triggered by a ${{ github.event_name }} event."
+      - run: echo "Release Tag - ${{ github.event.release.tag_name }}."
 
-      - name: "Setup Python v3.9"
-        id: setupPython
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.9'
-
-      - uses: actions/github-script@v7
-        id: getPullRequestData
-        with:
-          script: |
-            return (
-              await github.rest.repos.listPullRequestsAssociatedWithCommit({
-                commit_sha: context.sha,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-              })
-            ).data[0];
-
-      - name: Checkout Express App Code
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.PAT_TOKEN }}
-
-      - name: Configure Git
-        id: configureGit
-        run: |
-          git config --global user.name "Express GitHub Actions"
-          git config --global user.email "express-actions@users.noreply.github.com"
-
-      # - name: Create Temporary Branch
-      #   id: createBranch
-      #   env:
-      #     prNumber: ${{ fromJson(steps.getPullRequestData.outputs.result).number }}
-      #   run: |
-      #     git checkout -b "express-version-${prNumber}"
-      #     git push origin "express-version-${prNumber}"
-
-      - name: "Update Express App Version"
-        id: updateVersion
+      - name: Extract Express App Version
+        id: extractVersion
         env:
-          prBody: ${{ fromJson(steps.getPullRequestData.outputs.result).body }}
+          releaseTag: ${{ github.event.release.tag_name }}
         shell: pwsh
         run: |
-          $version = [regex]::matches($env:prBody, '(?<=\[version:).*(?=])').value
-          $major = $env:prBody -match '(?<=\[)major(?=])'
-          $minor = $env:prBody -match '(?<=\[)minor(?=])'
-          $build = $env:prBody -match '(?<=\[)build(?=])'
-
-          $packageJson = Get-Content -Path .\package.json | ConvertFrom-Json
-          $packageJsonVer = [System.Version]$packageJson.version
-
-          Write-Host "Current package.json version: $packageJsonVer"
-          Write-Host "Version found in commit message: $version"
-          Write-Host "Bump Major: $major"
-          Write-Host "Bump Minor: $minor"
-          Write-Host "Bump Build: $build"
-
-          try {
-            $version = [System.Version]$version
-            $newVersion = "{0}.{1}.{2}" -f $version.Major, $version.Minor, $version.Build
-          } catch {
-            $version = $null
-          }
-
-          if ($version) {
-            Write-Host "Version specificed"
-            $targetVersion = $newVersion
-          } elseif ($major) {
-            Write-Host "Major detected"
-            $targetVersion = "{0}.0.0" -f ($packageJsonVer.Major + 1)
-          } elseif ($minor) {
-            Write-Host "Minor detected"
-            $targetVersion = "{0}.{1}.0" -f $packageJsonVer.Major, ($packageJsonVer.Minor + 1)
-          } else {
-            Write-Host "Build detected"
-            $targetVersion = "{0}.{1}.{2}" -f $packageJsonVer.Major, $packageJsonVer.Minor, ($packageJsonVer.Build + 1)
-          }
-
-          Write-Host "Target version: $targetVersion"
-
-          $packageJson.version = $targetVersion
-          $packageJson | ConvertTo-Json | Set-Content -Path .\package.json
-
-          Write-Output "ipamVersion=$targetVersion" >> $Env:GITHUB_OUTPUT
-
-      - name: Install PIP Packages
-        id: installPipPackages
-        working-directory: python
-        run: |
-          pip install -r requirements.txt
-
-      - name: Freeze PIP Packages
-        id: freezePipPackages
-        working-directory: python
-        run: |
-          echo "# Dependencies for Actions v${{ steps.updateVersion.outputs.ipamVersion }}" > requirements.lock.txt
-          pip freeze >> requirements.lock.txt
-
-      # - name: "Create Express App ZIP Asset"
-      #   id: createZipAsset
-      #   shell: pwsh
-      #   run: |
-      #     Compress-Archive -Path .\package.json -DestinationPath .\assets\express.zip -Force
-
-      - name: Checkin Updated Express App Code
-        id: checkinCode
-        env:
-          prNumber: ${{ fromJson(steps.getPullRequestData.outputs.result).number }}
-        run: |
-          git commit -a -m "Updated Express App Version to v${{ steps.updateVersion.outputs.ipamVersion }} [skip ci]"
-          # git push origin "express-version-${prNumber}"
-          git push
-          echo "commitHash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-
-  release:
-    name: Create Express App Release
-    runs-on: ubuntu-latest
-    needs: version
-    steps:
-      - name: Checkout Express App Code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.version.outputs.commitHash }}
-
-      # - name: Create and Merge Pull Reuest
-      #   id: pullRequest
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
-      #     prNumber: ${{ needs.version.outputs.prNumber }}
-      #   run: |
-      #     echo "Creating pull request..."
-      #     gh pr create --base main --head "express-version-${prNumber}" --title "Update Express App Version" --body "-Updated Version to v${{ needs.version.outputs.ipamVersion }}"
-      #     # echo "Waiting for pull request requirements..."
-      #     # gh pr checks "express-version-${prNumber}" --watch
-      #     echo "Merging pull request..."
-      #     gh pr merge "express-version-${prNumber}" -t "Merge pull request from DCMattyG/express-version-${prNumber} [skip ci]" -m -d
-
-      # - name: Pull Merged Code from Main Branch
-      #   id: pullMainCode
-      #   run: |
-      #     git pull
-
-      - name: Create Express App Release
-        id: publishRelease
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
-          tagName: v${{ needs.version.outputs.ipamVersion }}
-        run: |
-          gh release create "$tagName" \
-            --repo="$GITHUB_REPOSITORY" \
-            --title="$tagName" \
-            --notes "Express App Release"
-
-      # - name: Publish Express App Release Asset
-      #   id: uploadReleaseAsset
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #     tagName: v${{ needs.version.outputs.ipamVersion }}
-      #     assetPath: ./assets/express.zip
-      #   run: |
-      #     gh release upload "$tagName" "$assetPath"
+          $version = $env:releaseTag -replace "v", ""
+          Write-Output "ipamVersion=$updatedVersion" >> $Env:GITHUB_OUTPUT
 
   build:
     name: Build Express App Containers
     runs-on: ubuntu-latest
-    needs: [ version, release ]
+    needs: [ init ]
     steps:
       - run: echo "Building new containers..."
-      - run: echo "Commit hash is ${{ needs.version.outputs.commitHash }}"
+      - run: echo "New version is ${{ needs.init.outputs.ipamVersion }}"
 
   build-legacy:
     name: Build Legacy Express App Containers
     runs-on: ubuntu-latest
-    needs: [ version, release ]
+    needs: [ init ]
     steps:
       - run: echo "Building legacy containers..."
-      - run: echo "Commit hash is ${{ needs.version.outputs.commitHash }}"
+      - run: echo "New version is ${{ needs.init.outputs.ipamVersion }}"

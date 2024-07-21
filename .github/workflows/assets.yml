@@ -1,0 +1,60 @@
+name: Express App Release Assets
+
+run-name: Express App Assets Build & Upload
+
+on:
+  release:
+    types: [ published ]
+
+permissions:
+  contents: write
+
+jobs:
+  assets:
+    name: Build & Upload Asset Files to Release
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Job triggered by a ${{ github.event_name }} event."
+      - run: echo "Release Tag - ${{ github.event.release.tag_name }}."
+
+      - name: "Setup NodeJS v18"
+        id: setupNode
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: "Setup Python v3.9"
+        id: setupPython
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Checkout Express App Code
+        uses: actions/checkout@v4
+
+      - name: Install NPM Packages
+        id: installNpmPackages
+        working-directory: python
+        run: |
+          npm ci
+
+      - name: Install PIP Packages
+        id: installPipPackages
+        working-directory: python
+        run: |
+          pip install -r requirements.lock.txt
+
+      - name: "Create Express App ZIP Asset"
+        id: createZipAsset
+        shell: pwsh
+        run: |
+          Compress-Archive -Path .\package.json -DestinationPath .\assets\express.zip -Force
+
+      - name: Publish Express App Release Asset
+        id: uploadReleaseAsset
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          tagName: ${{ github.event.release.tag_name }}
+          assetPath: ./assets/express.zip
+        run: |
+          gh release upload "$tagName" "$assetPath"

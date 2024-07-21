@@ -1,0 +1,146 @@
+name: Express App Version
+
+run-name: Express App Version & Release
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  version:
+    name: Update Express App Version
+    runs-on: ubuntu-latest
+    outputs:
+      ipamVersion: ${{ steps.updateVersion.outputs.ipamVersion }}
+      prNumber: ${{ fromJson(steps.getPullRequestData.outputs.result).number }}
+      commitHash: ${{ steps.checkinCode.outputs.commitHash }}
+    steps:
+      - run: echo "Job triggered by a ${{ github.event_name }} event to main."
+      - run: echo "---HEAD COMMIT MESSAGE--"
+      - run: echo "${{ github.event.head_commit.message }}"
+      - run: echo "------------------------"
+
+      - name: "Setup Python v3.9"
+        id: setupPython
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - uses: actions/github-script@v7
+        id: getPullRequestData
+        with:
+          script: |
+            return (
+              await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                commit_sha: context.sha,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+              })
+            ).data[0];
+
+      - name: Checkout Express App Code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Configure Git
+        id: configureGit
+        run: |
+          git config --global user.name "Express GitHub Actions"
+          git config --global user.email "express-actions@users.noreply.github.com"
+
+      - name: "Update Express App Version"
+        id: updateVersion
+        env:
+          prBody: ${{ fromJson(steps.getPullRequestData.outputs.result).body }}
+        shell: pwsh
+        run: |
+          $version = [regex]::matches($env:prBody, '(?<=\[version:).*(?=])').value
+          $major = $env:prBody -match '(?<=\[)major(?=])'
+          $minor = $env:prBody -match '(?<=\[)minor(?=])'
+          $build = $env:prBody -match '(?<=\[)build(?=])'
+
+          $packageJson = Get-Content -Path .\package.json | ConvertFrom-Json
+          $packageJsonVer = [System.Version]$packageJson.version
+
+          Write-Host "Current package.json version: $packageJsonVer"
+          Write-Host "Version found in commit message: $version"
+          Write-Host "Bump Major: $major"
+          Write-Host "Bump Minor: $minor"
+          Write-Host "Bump Build: $build"
+
+          try {
+            $version = [System.Version]$version
+            $newVersion = "{0}.{1}.{2}" -f $version.Major, $version.Minor, $version.Build
+          } catch {
+            $version = $null
+          }
+
+          if ($version) {
+            Write-Host "Version specificed"
+            $targetVersion = $newVersion
+          } elseif ($major) {
+            Write-Host "Major detected"
+            $targetVersion = "{0}.0.0" -f ($packageJsonVer.Major + 1)
+          } elseif ($minor) {
+            Write-Host "Minor detected"
+            $targetVersion = "{0}.{1}.0" -f $packageJsonVer.Major, ($packageJsonVer.Minor + 1)
+          } else {
+            Write-Host "Build detected"
+            $targetVersion = "{0}.{1}.{2}" -f $packageJsonVer.Major, $packageJsonVer.Minor, ($packageJsonVer.Build + 1)
+          }
+
+          Write-Host "Target version: $targetVersion"
+
+          $packageJson.version = $targetVersion
+          $packageJson | ConvertTo-Json | Set-Content -Path .\package.json
+
+          Write-Output "ipamVersion=$targetVersion" >> $Env:GITHUB_OUTPUT
+
+      - name: Install PIP Packages
+        id: installPipPackages
+        working-directory: python
+        run: |
+          pip install -r requirements.txt --progress-bar off
+
+      - name: Freeze PIP Packages
+        id: freezePipPackages
+        working-directory: python
+        run: |
+          echo "# Dependencies for Actions v${{ steps.updateVersion.outputs.ipamVersion }}" > requirements.lock.txt
+          pip freeze >> requirements.lock.txt
+
+      - name: Checkin Updated Express App Code
+        id: checkinCode
+        env:
+          prNumber: ${{ fromJson(steps.getPullRequestData.outputs.result).number }}
+        run: |
+          git commit -a -m "Updated Express App Version to v${{ steps.updateVersion.outputs.ipamVersion }} [skip ci]"
+          # git push origin "express-version-${prNumber}"
+          git push
+          echo "commitHash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+  release:
+    name: Create Express App Release
+    runs-on: ubuntu-latest
+    needs: version
+    steps:
+      - name: Checkout Express App Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version.outputs.commitHash }}
+
+      - name: Create Express App Release
+        id: publishRelease
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          tagName: v${{ needs.version.outputs.ipamVersion }}
+        run: |
+          gh release create "$tagName" \
+            --repo="$GITHUB_REPOSITORY" \
+            --title="$tagName" \
+            --notes "Express App Release"
