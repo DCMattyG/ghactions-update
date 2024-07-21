@@ -9,6 +9,9 @@ on:
 permissions:
   id-token: write
 
+env:
+  ACR_NAME: ${{ vars.APP_PROD_ACR }}
+
 jobs:
   init:
     name: Initialize Express App Build
