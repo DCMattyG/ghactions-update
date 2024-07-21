@@ -26,7 +26,7 @@ jobs:
         shell: pwsh
         run: |
           $version = $env:releaseTag -replace "v", ""
-          Write-Output "ipamVersion=$updatedVersion" >> $Env:GITHUB_OUTPUT
+          Write-Output "ipamVersion=$version" >> $Env:GITHUB_OUTPUT
 
   build:
     name: Build Express App Containers
