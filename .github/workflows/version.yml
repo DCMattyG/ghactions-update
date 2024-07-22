@@ -137,7 +137,7 @@ jobs:
       - name: Create Express App Release
         id: publishRelease
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           tagName: v${{ needs.version.outputs.ipamVersion }}
         run: |
           gh release create "$tagName" \
