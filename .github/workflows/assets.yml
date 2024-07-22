@@ -13,7 +13,7 @@ jobs:
   assets:
     name: Build & Upload Asset Files to Release
     runs-on: ubuntu-latest
-    environment: production
+    # environment: production
     steps:
       - run: echo "Job triggered by a ${{ github.event_name }} event."
       - run: echo "Release Tag - ${{ github.event.release.tag_name }}."
