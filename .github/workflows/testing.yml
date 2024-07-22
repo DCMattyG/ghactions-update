@@ -4,9 +4,11 @@ run-name: Express App Deployment & Testing
 
 on:
   pull_request:
-    branches:
-      - 'main'
-      - '!express-version-*'
+    branches: [ main ]
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - 'docs/**'
 
 jobs:
   deploy:

@@ -5,6 +5,10 @@ run-name: Express App Version & Release
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - 'docs/**'
 
 permissions:
   contents: write
